@@ -3,12 +3,21 @@ import { bids as bidsScehma} from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"
 import { revalidatePath } from "next/cache";
+import SignIn from "@/components/ui/sign-in";
+import { SignOut } from "@/components/ui/sign-out";
+import { auth } from "@/auth";
 
 
 export default async function Home() {
   const bids =await database.query.bids.findMany();
+  const session = await auth();
+
   return (
     <main className="container mx-auto py-12">
+
+      {session ? <SignOut/>: <SignIn/>}
+      {session?.user?.name}
+     
       <form action={async(formData:FormData)=>{
         'use server';
         //const bid=formData.get('bid') as string;

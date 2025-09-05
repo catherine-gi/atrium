@@ -102,3 +102,12 @@ export const verificationTokens = pgTable(
 export const bids = pgTable("a_bids", {
   id: serial("id").primaryKey()}
 );
+export const items = pgTable("atrium_items", {
+  id: serial("id").primaryKey(),
+  userId: text("userId")
+  .notNull()
+  .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+});
+
+export const schema = { bids, items, users, accounts, sessions, verificationTokens };

@@ -108,6 +108,7 @@ export const items = pgTable("atrium_items", {
   .notNull()
   .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  startingPrice: integer("startingPrice").notNull().default(0), //to avoid deleting tables
 });
 
 export const schema = { bids, items, users, accounts, sessions, verificationTokens };

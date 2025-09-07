@@ -1,7 +1,9 @@
 import { database } from "@/db/database";
-import { bids as bidsScehma, items} from "@/db/schema";
+import { bids as bidsScehma, items } from "@/db/schema";
 import { auth } from "@/auth";
-
+import Image from "next/image";
+import { getImgUrl } from "@/util/files";
+import { ItemCard } from "@/app/item-card";
 
 
 export default async function Home() {
@@ -10,19 +12,18 @@ export default async function Home() {
   const session = await auth();
   const user = session?.user;
 
+  // function getImgUrl(fileKey: string) {
+  //   return `${env.NEXT_PUBLIC_BUCKET_URL}${fileKey}`;
+  // }
+
   return (
     <main className="container mx-auto py-12">
-      <h1 className="text-3xl font-bold mb-6">Items for Sale</h1>  
-      <div className="grid grid-cols-4 gap-6">
-        {allItems.map((item)=>(
-          <div key={item.id} className="border p-8 rounded-xl">
-            {item.name}
-            <div>
-              Starting Price: ${item.startingPrice}
-            </div>
-            
-          </div>
-        
+      <h1 className="text-4xl font-extrabold mb-10 text-center">
+        Items for Sale
+      </h1>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        {allItems.map((item) => ( <ItemCard  key={item.id} item={item} />
         ))}
       </div>
     </main>

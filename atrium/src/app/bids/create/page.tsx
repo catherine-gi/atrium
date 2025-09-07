@@ -1,17 +1,13 @@
+'use client'
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"
 import {createItemAction} from "@/app/bids/create/actions"
+import {createUploadUrlAction} from "@/app/bids/create/actions"
 
-import { auth } from "@/auth";
 
 
-export default async function createPage() {
-  //const bids = await database.select().from(bidsScehma);
-  //const allItems = await database.select().from(items);
-  const session = await auth();
-  //if (!session) return null;
-  //if (!session?.user) return null;
-  const user = session?.user;
+export default function createPage() {
+ 
 
   return (
     <main className="container mx-auto py-12">
@@ -21,10 +17,29 @@ export default async function createPage() {
      
       <form 
       className="flex border py-4 px-4 gap-2 mb-4 rounded-xl space-y-4 w-fit"
-      action={createItemAction}>
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const form = e.currentTarget as HTMLFormElement;
+        const formData = new FormData(form);
+        const file = formData.get("file") as File;
+        const uploadUrl = await createUploadUrlAction(file.name,file.type); //storing to bucket directly from user's browser
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+        await fetch(uploadUrl, {
+          method: "PUT",
+          body: file,
+          
+        })
+        await createItemAction({
+          name: formData.get("name") as string,
+          startingPrice: Number(formData.get("startingPrice")),
+          fileName: file.name,
+        });
+      }}>
         <Input required name="name" placeholder="Add Item" />
         <Input required name="startingPrice" type="number" placeholder="Start Price" />
-        <Button type="submit">Add Item</Button>
+        <Input required name="file" type="file" placeholder="Image" />
+        <Button type="submit">Post Item</Button>
       </form>
 
 

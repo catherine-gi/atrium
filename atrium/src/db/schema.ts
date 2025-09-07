@@ -108,7 +108,9 @@ export const items = pgTable("atrium_items", {
   .notNull()
   .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  fileKey: text("fileKey").notNull(),
   startingPrice: integer("startingPrice").notNull().default(0), //to avoid deleting tables
 });
 
 export const schema = { bids, items, users, accounts, sessions, verificationTokens };
+export type Item = typeof items.$inferSelect;

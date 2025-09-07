@@ -4,12 +4,18 @@ import { database } from "@/db/database";
 import { items } from "@/db/schema";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { getSignedUrlForS3Object } from "@/lib/s3";
 
-export async function createItemAction(formData: FormData) {
+
+export async function createUploadUrlAction(key : string, type:string) {
+    return await getSignedUrlForS3Object(key,type);
+}
+export async function createItemAction({fileName,name,startingPrice}:{fileName:string, name : string, startingPrice: number}) {
     const session = await auth();
     if (!session) {
         throw new Error("Not authenticated");
     }
+    //const file = formData.get("file") as File;
     const user = session.user;
     if(!user || !user.id) {
         throw new Error("No user found");
@@ -17,8 +23,9 @@ export async function createItemAction(formData: FormData) {
  
         //const bid=formData.get('bid') as string;
         await database.insert(items).values({
-          name: formData.get("name") as string,
-          startingPrice: Number(formData.get("startingPrice")),
+          name,
+          startingPrice,
+          fileKey: fileName,
           userId: user.id,
         });
         redirect('/'); //auto refresh

@@ -1,4 +1,4 @@
-import { env } from "../../env";
+import { env } from "../env";
 //import * as schema from "./schema"
 import { schema } from "./schema";
 

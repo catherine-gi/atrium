@@ -1,11 +1,15 @@
 import { database } from "@/db/database";
-import { items } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { bids, items, users } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import { getImgUrl } from "@/util/files";
 import { formatDistance } from "date-fns";
+import { createbidAction } from "./actions";
+import { auth } from "@/auth";
+import { getBidsForItems } from "@/data-access/bids";
+import { getItems } from "@/data-access/items";
 
 function formatTimestamp(timestamp: Date) {
   return formatDistance(timestamp, new Date(), { addSuffix: true });
@@ -18,11 +22,15 @@ export default async function ItemPage({
 }) {
   const id = parseInt(params.itemId, 10);
 
-  const [item] = await database
-    .select()
-    .from(items)
-    .where(eq(items.id, id))
-    .limit(1);
+  const session = await auth();
+  const user = session?.user;
+
+  // const [item] = await database
+  //   .select()
+  //   .from(items)
+  //   .where(eq(items.id, id))
+  //   .limit(1);
+  const item = await getItems(id);
 
   if (!item) {
     return (
@@ -42,24 +50,29 @@ export default async function ItemPage({
     );
   }
 
-  const bids: {
-    id: number;
-    amount: number;
-    bidder: string;
-    timestamp: Date;
-  }[] = [
-    // { id: 1, amount: 150, bidder: "Alice", timestamp: new Date() },
-    // { id: 2, amount: 200, bidder: "Bob", timestamp: new Date() },
-    // { id: 3, amount: 250, bidder: "Charlie", timestamp: new Date() },
-  ];
+  //  fetch bids ordered by highest first
+  // const allBids = await database
+  //   .select({
+  //     bid: bids,
+  //     users: {
+  //       id: users.id,
+  //       name: users.name,
+  //       image: users.image,
+  //     },
+  //   })
+  //   .from(bids)
+  //   .leftJoin(users, eq(users.id, bids.usersId))
+  //   .where(eq(bids.itemId, id))
+  //   .orderBy(desc(bids.amount));
+  const allBids = await getBidsForItems(item.id);
 
-  const hasBids = bids.length > 0;
+  const hasBids = allBids.length > 0;
 
   return (
     <main className="container mx-auto py-12 px-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
         {/* Left side: Item details */}
-        <div className="space-y-6">
+        <div className="space-y-6 sticky top-12 self-start">
           <h1 className="text-3xl font-bold text-gray-900">
             Auction for {item.name}
           </h1>
@@ -90,36 +103,60 @@ export default async function ItemPage({
           </div>
         </div>
 
-        {/* Right side: Bids */}
+        {/* Right side: Scrollable Bids */}
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold text-gray-800">Current Bids</h2>
 
-          {!hasBids ? (
-            <p className="text-gray-500 italic">No bids yet. Be the first!</p>
+          {/* Place Bid button */}
+          {user ? (
+            <form action={createbidAction.bind(null, item.id)} className="pt-2">
+              <Button className="w-full">Place a Bid</Button>
+            </form>
           ) : (
-            <ul className="space-y-3">
-              {bids.map((bid) => (
-                <li
-                  key={bid.id}
-                  className="p-4 border rounded-lg bg-white shadow-sm"
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-800">
-                      {bid.bidder}
-                    </span>
-                    <span className="font-semibold text-lg text-gray-900">
-                      ${bid.amount}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {formatTimestamp(bid.timestamp)}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="pt-2">
+              <Button className="w-full" disabled>
+                Place a Bid
+              </Button>
+              <p className="text-red-500 text-sm text-center mt-2">
+                You must be logged in to place a bid.
+              </p>
+            </div>
           )}
 
-          <Button className="w-full">Place a Bid</Button>
+          {/* Scrollable Bids List */}
+          <div className="max-h-96 overflow-y-auto pr-2 border rounded-lg bg-gray-50">
+            {!hasBids ? (
+              <p className="text-gray-500 italic p-4">No bids yet. Be the first!</p>
+            ) : (
+              <ul className="space-y-3 p-4">
+                {allBids.map((bid, index) => (
+                  <li
+                    key={bid.bid.id}
+                    className={`p-4 border rounded-lg shadow-sm ${
+                      index === 0 ? "bg-green-50 border-green-300" : "bg-white"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-800">
+                        {bid.users?.name ?? "Unknown User"}
+                      </span>
+                      <span className="font-semibold text-lg text-gray-900">
+                        ${bid.bid.amount}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {formatTimestamp(bid.bid.timestamp)}
+                    </div>
+                    {index === 0 && (
+                      <div className="text-xs text-green-600 font-semibold mt-1">
+                        Highest Bid
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </main>

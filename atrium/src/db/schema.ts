@@ -10,6 +10,7 @@ import {
 import postgres from "postgres"
 import { drizzle } from "drizzle-orm/postgres-js"
 import type { AdapterAccountType } from "@auth/core/adapters"
+import { relations } from "drizzle-orm"
  
 const connectionString = "postgres://postgres:postgres@localhost:5432/drizzle"
 const pool = postgres(connectionString, { max: 1 })
@@ -76,32 +77,8 @@ export const verificationTokens = pgTable(
   ]
 )
  
-// export const authenticators = pgTable(
-//   "atrium_authenticator",
-//   {
-//     credentialID: text("credentialID").notNull().unique(),
-//     userId: text("userId")
-//       .notNull()
-//       .references(() => users.id, { onDelete: "cascade" }),
-//     providerAccountId: text("providerAccountId").notNull(),
-//     credentialPublicKey: text("credentialPublicKey").notNull(),
-//     counter: integer("counter").notNull(),
-//     credentialDeviceType: text("credentialDeviceType").notNull(),
-//     credentialBackedUp: boolean("credentialBackedUp").notNull(),
-//     transports: text("transports"),
-//   },
-//   (authenticator) => [
-//     {
-//       compositePK: primaryKey({
-//         columns: [authenticator.userId, authenticator.credentialID],
-//       }),
-//     },
-//   ]
-// )
 
-export const bids = pgTable("a_bids", {
-  id: serial("id").primaryKey()}
-);
+
 export const items = pgTable("atrium_items", {
   id: serial("id").primaryKey(),
   userId: text("userId")
@@ -109,10 +86,24 @@ export const items = pgTable("atrium_items", {
   .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   fileKey: text("fileKey").notNull(),
+  currentBid: integer("currentBid").notNull().default(0),
   startingPrice: integer("startingPrice").notNull().default(0), //to avoid deleting tables
   bidInterval: integer("bidInterval").notNull().default(1),
   //auctionEnd: timestamp("auctionEnd", { mode: "date" }).notNull(),
 });
+export const bids = pgTable("a_bids", {
+  id: serial("id").primaryKey(),
+  amount: integer("amount").notNull(),
+  itemId: serial("itemId").notNull().references(() => items.id, { onDelete: "cascade" }),
+  usersId: text("usersId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  timestamp: timestamp("timestamp", { mode: "date" }).notNull().defaultNow(),
 
+});
+export const usersRelations = relations(bids, ({ one }) => ({
+	invitee: one(users, {
+		fields: [bids.usersId],
+		references: [users.id],
+	}),
+}));
 export const schema = { bids, items, users, accounts, sessions, verificationTokens };
 export type Item = typeof items.$inferSelect;

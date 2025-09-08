@@ -7,14 +7,7 @@ import { ItemCard } from "@/app/item-card";
 
 
 export default async function Home() {
-  const bids = await database.select().from(bidsScehma);
   const allItems = await database.select().from(items);
-  const session = await auth();
-  const user = session?.user;
-
-  // function getImgUrl(fileKey: string) {
-  //   return `${env.NEXT_PUBLIC_BUCKET_URL}${fileKey}`;
-  // }
 
   return (
     <main className="container mx-auto py-12">

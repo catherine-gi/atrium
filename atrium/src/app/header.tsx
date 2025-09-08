@@ -17,9 +17,17 @@ export async function Header() {
             <h1 className="text-2xl font-bold">Atrium</h1>
             </div>
         </Link>
-        <Link href="/bids/create" className="hover:underline">
-          Post an Item
+        <Link href="/" className="hover:underline">
+          All Auctions
         </Link>
+        <Link href="/bids/create" className="hover:underline">
+          Create Auction
+        </Link>
+
+        <Link href="/auctions" className="hover:underline">
+          My Auctions
+        </Link>
+
 
         {/* Right side: user + auth button */}
         <div className="flex items-center gap-4">

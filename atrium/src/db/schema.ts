@@ -110,6 +110,8 @@ export const items = pgTable("atrium_items", {
   name: text("name").notNull(),
   fileKey: text("fileKey").notNull(),
   startingPrice: integer("startingPrice").notNull().default(0), //to avoid deleting tables
+  bidInterval: integer("bidInterval").notNull().default(1),
+  //auctionEnd: timestamp("auctionEnd", { mode: "date" }).notNull(),
 });
 
 export const schema = { bids, items, users, accounts, sessions, verificationTokens };

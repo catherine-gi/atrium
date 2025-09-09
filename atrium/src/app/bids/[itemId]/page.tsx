@@ -18,18 +18,14 @@ function formatTimestamp(timestamp: Date) {
 export default async function ItemPage({
   params,
 }: {
-  params: { itemId: string };
+  params: Promise<{ itemId: string }>;
 }) {
-  const id = parseInt(params.itemId, 10);
+  const { itemId } = await params;
+  const id = parseInt(itemId, 10);
 
   const session = await auth();
   const user = session?.user;
 
-  // const [item] = await database
-  //   .select()
-  //   .from(items)
-  //   .where(eq(items.id, id))
-  //   .limit(1);
   const item = await getItems(id);
 
   if (!item) {
@@ -50,22 +46,7 @@ export default async function ItemPage({
     );
   }
 
-  //  fetch bids ordered by highest first
-  // const allBids = await database
-  //   .select({
-  //     bid: bids,
-  //     users: {
-  //       id: users.id,
-  //       name: users.name,
-  //       image: users.image,
-  //     },
-  //   })
-  //   .from(bids)
-  //   .leftJoin(users, eq(users.id, bids.usersId))
-  //   .where(eq(bids.itemId, id))
-  //   .orderBy(desc(bids.amount));
   const allBids = await getBidsForItems(item.id);
-
   const hasBids = allBids.length > 0;
 
   return (
@@ -100,6 +81,12 @@ export default async function ItemPage({
                 ${item.startingPrice}
               </span>
             </div>
+            <div>
+              Current Highest Bid:{" "}
+              <span className="font-semibold text-2xl text-gray-900">
+                ${item.currentBid}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -126,14 +113,18 @@ export default async function ItemPage({
           {/* Scrollable Bids List */}
           <div className="max-h-96 overflow-y-auto pr-2 border rounded-lg bg-gray-50">
             {!hasBids ? (
-              <p className="text-gray-500 italic p-4">No bids yet. Be the first!</p>
+              <p className="text-gray-500 italic p-4">
+                No bids yet. Be the first!
+              </p>
             ) : (
               <ul className="space-y-3 p-4">
                 {allBids.map((bid, index) => (
                   <li
                     key={bid.bid.id}
                     className={`p-4 border rounded-lg shadow-sm ${
-                      index === 0 ? "bg-green-50 border-green-300" : "bg-white"
+                      index === 0
+                        ? "bg-green-50 border-green-300"
+                        : "bg-white"
                     }`}
                   >
                     <div className="flex justify-between items-center">

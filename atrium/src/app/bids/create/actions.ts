@@ -10,7 +10,7 @@ import { getSignedUrlForS3Object } from "@/lib/s3";
 export async function createUploadUrlAction(key : string, type:string) {
     return await getSignedUrlForS3Object(key,type);
 }
-export async function createItemAction({fileName,name,startingPrice}:{fileName:string, name : string, startingPrice: number}) {
+export async function createItemAction({fileName,name,startingPrice,endDate}:{fileName:string, name : string, startingPrice: number,endDate:Date}) {
     const session = await auth();
     if (!session) {
         throw new Error("Not authenticated");
@@ -27,6 +27,7 @@ export async function createItemAction({fileName,name,startingPrice}:{fileName:s
           startingPrice,
           fileKey: fileName,
           userId: user.id,
+          endDate,
         });
         redirect('/'); //auto refresh
         

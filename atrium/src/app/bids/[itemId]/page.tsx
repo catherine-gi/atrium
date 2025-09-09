@@ -1,5 +1,5 @@
 import { database } from "@/db/database";
-import { bids, items, users } from "@/db/schema";
+import { bids, items, users, Item } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -26,7 +26,7 @@ export default async function ItemPage({
   const session = await auth();
   const user = session?.user;
 
-  const item = await getItems(id);
+  const item: Item | null = await getItems(id);
 
   if (!item) {
     return (
@@ -48,6 +48,10 @@ export default async function ItemPage({
 
   const allBids = await getBidsForItems(item.id);
   const hasBids = allBids.length > 0;
+
+  // Determine if the user can place a bid
+  const canPlaceBid =
+    session && item.userId !== session.user?.id && new Date() <= item.endDate;
 
   return (
     <main className="container mx-auto py-12 px-4">
@@ -90,25 +94,55 @@ export default async function ItemPage({
           </div>
         </div>
 
-        {/* Right side: Scrollable Bids */}
+        {/* Right side: Bids and Place Bid button */}
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold text-gray-800">Current Bids</h2>
 
-          {/* Place Bid button */}
-          {user ? (
+          {/* Conditional Place Bid / View Bids */}
+          {/* Conditional Place Bid / View Bids */}
+          {!session || new Date() > item.endDate ? (
+            // Show "View Bids" when not logged in OR auction ended
+
+            <div className="pt-2">
+              {!session&&(
+                <p>log in first -_- or just view</p>
+              )}
+              <Button asChild className="w-full">
+                <Link href={`/bids/${item.id}`}>View Bids</Link>
+              </Button>
+            </div>
+          ) : (
+            // Auction active and user logged in
             <form action={createbidAction.bind(null, item.id)} className="pt-2">
               <Button className="w-full">Place a Bid</Button>
             </form>
+          )}
+
+          {/* {canPlaceBid ? (
+            user ? (
+              <form
+                action={createbidAction.bind(null, item.id)}
+                className="pt-2"
+              >
+                <Button className="w-full">Place a Bid</Button>
+              </form>
+            ) : (
+              <div className="pt-2">
+                <Button className="w-full" disabled>
+                  Place a Bid
+                </Button>
+                <p className="text-red-500 text-sm text-center mt-2">
+                  You must be logged in to place a bid.
+                </p>
+              </div>
+            )
           ) : (
             <div className="pt-2">
-              <Button className="w-full" disabled>
-                Place a Bid
+              <Button asChild className="w-full">
+                <Link href={`/bids/${item.id}`}>View Bids</Link>
               </Button>
-              <p className="text-red-500 text-sm text-center mt-2">
-                You must be logged in to place a bid.
-              </p>
             </div>
-          )}
+          )} */}
 
           {/* Scrollable Bids List */}
           <div className="max-h-96 overflow-y-auto pr-2 border rounded-lg bg-gray-50">
@@ -122,9 +156,7 @@ export default async function ItemPage({
                   <li
                     key={bid.bid.id}
                     className={`p-4 border rounded-lg shadow-sm ${
-                      index === 0
-                        ? "bg-green-50 border-green-300"
-                        : "bg-white"
+                      index === 0 ? "bg-green-50 border-green-300" : "bg-white"
                     }`}
                   >
                     <div className="flex justify-between items-center">

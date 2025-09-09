@@ -89,7 +89,7 @@ export const items = pgTable("atrium_items", {
   currentBid: integer("currentBid").notNull().default(0),
   startingPrice: integer("startingPrice").notNull().default(0), //to avoid deleting tables
   bidInterval: integer("bidInterval").notNull().default(1),
-  //auctionEnd: timestamp("auctionEnd", { mode: "date" }).notNull(),
+  endDate: timestamp("endDate", { mode: "date" }).notNull(),
 });
 export const bids = pgTable("a_bids", {
   id: serial("id").primaryKey(),
